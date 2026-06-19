@@ -149,7 +149,9 @@ app.get('/simulate-success/:tx_ref', (req, res) => {
 });
 
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`Backend Engine running locally on port ${PORT}`));
+app.listen(PORT, '0.0.0.0', () => {
+    console.log(`Backend Engine running smoothly on port ${PORT}`);
+});
 
 // CRASH AND POWER-LOSS PROTECTION SHIELDS
 process.on('unhandledRejection', (reason, promise) => {
