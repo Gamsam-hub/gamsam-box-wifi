@@ -31,7 +31,7 @@ app.post('/pay', async (req, res) => {
     const tx_ref = `GAMSAM-${tenantId.toUpperCase()}-${Date.now()}`;
     
     let network = "MTN";
-    if (phone.startsWith("25670") || phone.startsWith("25675") || phone.startsWith("25674")) {
+    if (phone.startsWith("25670") || phone.startsWith("25675") || phone.startsWith("25673") || phone.startsWith("25674")) {
         network = "AIRTEL";
     }
 
