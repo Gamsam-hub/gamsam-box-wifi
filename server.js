@@ -25,6 +25,7 @@ app.get('/', (req, res) => {
     res.status(200).send("Gamsam System Online. 🚀");
 });
 
+// REPLACE your current app.post('/pay') endpoint with this:
 app.post('/pay', async (req, res) => {
     const { phone, amount, business, mac, ip } = req.body;
     const tenantId = business ? business.toLowerCase() : "gamsam_boss_router";
@@ -46,29 +47,32 @@ app.post('/pay', async (req, res) => {
         "fullname": "Premium Wi-Fi Subscriber"
     };
 
-    try {
-        const response = await axios.post(
-            'https://flutterwave.com', 
-            payload,
-            { headers: { 'Authorization': `Bearer ${process.env.FLW_SECRET_KEY}`, 'Content-Type': 'application/json' } }
-        );
+    // Save initial placeholder context inside your local tracking registry instantly
+    sessionRegistry[tx_ref] = {
+        status: 'pending',
+        voucher: null,
+        business: tenantId,
+        phone: phone,
+        amount: amount,
+        mac: mac,
+        ip: ip
+    };
 
-        sessionRegistry[tx_ref] = {
-            status: 'pending',
-            voucher: null,
-            business: tenantId,
-            phone: phone,
-            amount: amount,
-            mac: mac,
-            ip: ip
-        };
+    // FIRES THE API CALL AND REPLIES TO THE USER IMMEDIATELY WITHOUT WAITING
+    axios.post(
+        'https://flutterwave.com', 
+        payload,
+        { headers: { 'Authorization': `Bearer ${process.env.FLW_SECRET_KEY}`, 'Content-Type': 'application/json' } }
+    ).then(response => {
+        console.log(`[STK PUSH FLIGHT SUCCESS] Ref: ${tx_ref} pushed to network gates.`);
+    }).catch(error => {
+        console.error(`[STK BACKGROUND BACKGROUND ERR]: ${error.message}`);
+        // If it fails immediately, flag it so the polling loop catches it
+        if(sessionRegistry[tx_ref]) sessionRegistry[tx_ref].status = 'failed';
+    });
 
-        console.log(`[STK PUSH] Ref: ${tx_ref} | Target: ${phone}`);
-        return res.status(200).json({ status: 'success', tx_ref });
-    } catch (error) {
-        console.error(`[STK FAILURE]: ${error.message}`);
-        return res.status(500).json({ status: 'error', message: "Gateway connection dropped." });
-    }
+    // CRITICAL: Respond to Render frontend within 500 milliseconds to completely prevent 504 timeouts!
+    return res.status(200).json({ status: 'success', tx_ref });
 });
 
 app.post('/webhook', async (req, res) => {
