@@ -156,7 +156,7 @@ app.get('/simulate-success/:tx_ref', (req, res) => {
     return res.status(404).send("Transaction reference context profile window expired.");
 });
 
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 10000;
 app.listen(PORT, '0.0.0.0', () => {
     console.log(`Backend Engine running smoothly on port ${PORT}`);
 });
