@@ -1,3 +1,10 @@
+// ensure path utilities are included
+const path = require('path');
+// UPDATE your existing app.get('/') block to send the actual portal layout:
+app.get('/', (req, res) => {
+    res.sendFile(path.join(__dirname, 'index.html'));
+});
+
 const express = require('express');
 const cors = require('cors');
 const axios = require('axios');
