@@ -4,7 +4,12 @@ const axios = require('axios');
 require('dotenv').config();
 
 const app = express();
-app.use(cors({ origin: '*', methods: ['GET', 'POST'] }));
+app.use(cors({
+    origin: '*',
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'verif-hash']
+}));
+
 app.use(express.json());
 
 // CENTRAL TENANT REGISTRY
@@ -24,55 +29,65 @@ let activeVouchers = {};
 app.get('/', (req, res) => {
     res.status(200).send("Gamsam System Online. 🚀");
 });
-
-// REPLACE your current app.post('/pay') endpoint with this:
+// PAY ROUTE
 app.post('/pay', async (req, res) => {
-    const { phone, amount, business, mac, ip } = req.body;
-    const tenantId = business ? business.toLowerCase() : "gamsam_boss_router";
-    const tx_ref = `GAMSAM-${tenantId.toUpperCase()}-${Date.now()}`;
-    
-    let network = "MTN";
-    if (phone.startsWith("25670") || phone.startsWith("25675") || phone.startsWith("25673") || phone.startsWith("25674")) {
-        network = "AIRTEL";
+    try {
+        const { phone, amount, business, mac, ip } = req.body;
+        const tenantId = business ? business.toLowerCase() : "gamsam_boss_router";
+        const tx_ref = `GAMSAM-${tenantId.toUpperCase()}-${Date.now()}`;
+        
+        let network = "MTN";
+        if (phone.startsWith("25670") || phone.startsWith("25675") || phone.startsWith("25674")) {
+            network = "AIRTEL";
+        }
+
+        const payload = {
+            "amount": amount,
+            "currency": "UGX",
+            "phone_number": phone,
+            "network": network,
+            "email": `${tenantId}@gamsam-wifi.com`,
+            "tx_ref": tx_ref,
+            "order_id": "WIFI-" + Date.now(),
+            "fullname": "Premium Wi-Fi Subscriber"
+        };
+
+        // Save initial placeholder context inside your local tracking registry instantly
+        sessionRegistry[tx_ref] = {
+            status: 'pending',
+            voucher: null,
+            business: tenantId,
+            phone: phone,
+            amount: amount,
+            mac: mac,
+            ip: ip
+        };
+
+        // Fire the API call asynchronously in the background. Do NOT use 'await' here.
+        axios.post(
+            'https://api.flutterwave.com/v3/charges?type=mobile_money_uganda', 
+            payload,
+            { 
+                headers: { 
+                    'Authorization': `Bearer ${process.env.FLW_SECRET_KEY}`, 
+                    'Content-Type': 'application/json' 
+                } 
+            }
+        ).then(response => {
+            console.log(`[STK PUSH SUCCESS] Ref: ${tx_ref} pushed to network gates.`);
+        }).catch(error => {
+            console.error(`[STK BACKGROUND ERR]: ${error.response ? JSON.stringify(error.response.data) : error.message}`);
+            if(sessionRegistry[tx_ref]) sessionRegistry[tx_ref].status = 'failed';
+        });
+
+        // ⚡ CRITICAL FIX: Return this JSON response immediately! 
+        // This cuts the connection early so the user's browser never experiences a timeout.
+        return res.status(200).json({ status: 'success', tx_ref });
+
+    } catch (globalError) {
+        console.error(`[PAY ROUTE CRITICAL FAILURE]:`, globalError);
+        return res.status(500).json({ status: 'failed', error: 'Internal gate timeout' });
     }
-
-    const payload = {
-        "amount": amount,
-        "currency": "UGX",
-        "phone_number": phone,
-        "network": network,
-        "email": `${tenantId}@gamsam-wifi.com`,
-        "tx_ref": tx_ref,
-        "order_id": "WIFI-" + Date.now(),
-        "fullname": "Premium Wi-Fi Subscriber"
-    };
-
-    // Save initial placeholder context inside your local tracking registry instantly
-    sessionRegistry[tx_ref] = {
-        status: 'pending',
-        voucher: null,
-        business: tenantId,
-        phone: phone,
-        amount: amount,
-        mac: mac,
-        ip: ip
-    };
-
-    // FIRES THE API CALL AND REPLIES TO THE USER IMMEDIATELY WITHOUT WAITING
-    axios.post(
-        'https://api.flutterwave.com/v3/charges?type=mobile_money_uganda', 
-        payload,
-        { headers: { 'Authorization': `Bearer ${process.env.FLW_SECRET_KEY}`, 'Content-Type': 'application/json' } }
-    ).then(response => {
-        console.log(`[STK PUSH FLIGHT SUCCESS] Ref: ${tx_ref} pushed to network gates.`);
-    }).catch(error => {
-        console.error(`[STK BACKGROUND BACKGROUND ERR]: ${error.message}`);
-        // If it fails immediately, flag it so the polling loop catches it
-        if(sessionRegistry[tx_ref]) sessionRegistry[tx_ref].status = 'failed';
-    });
-
-    // CRITICAL: Respond to Render frontend within 500 milliseconds to completely prevent 504 timeouts!
-    return res.status(200).json({ status: 'success', tx_ref });
 });
 
 app.post('/webhook', async (req, res) => {
