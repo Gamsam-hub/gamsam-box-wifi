@@ -90,8 +90,17 @@ app.post('/pay', async (req, res) => {
         if(sessionRegistry[tx_ref]) sessionRegistry[tx_ref].status = 'failed';
     });
 
-    // 👍 UNBLOCK FRONTEND: Respond immediately so index.html never logs a connection timeout error.
-    return res.status(200).json({ status: 'success', tx_ref });
+    // 🏆 MULTI-TENANT FIX: Direct browser back to local router memory zone instantly 
+        // This cuts the cloud connection early so the user's browser never experiences a timeout!
+        const routerGateway = "192.168.88.1"; // Your hAP lite gateway IP
+        
+        return res.redirect(`http://${routerGateway}/login?tx_ref=${tx_ref}&phone=${phone}&amount=${amount}`);
+
+    } catch (globalError) {
+        console.error(`[PAY ROUTE CRITICAL FAILURE]:`, globalError);
+        return res.status(500).send('Internal Gate Error');
+    }
+});
 });
 
 
