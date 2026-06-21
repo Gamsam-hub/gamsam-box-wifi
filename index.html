@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gamsam Premium Wi-Fi Gateway</title>
+    <link href="https://googleapis.com" rel="stylesheet">
+    <style>
+        :root {
+            --bg-gradient: linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #311042 100%);
+            --glass-bg: rgba(255, 255, 255, 0.03);
+            --glass-border: rgba(255, 255, 255, 0.08);
+            --accent-primary: linear-gradient(135deg, #6366f1 0%, #a855f7 100%);
+            --accent-hover: linear-gradient(135deg, #4f46e5 0%, #9333ea 100%);
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Plus Jakarta Sans', sans-serif; }
+        body { background: var(--bg-gradient); min-height: 100vh; display: flex; justify-content: center; align-items: center; padding: 20px; color: var(--text-main); }
+
+        .container { 
+            background: var(--glass-bg); 
+            backdrop-filter: blur(20px); 
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border); 
+            padding: 35px 25px; 
+            border-radius: 24px; 
+            width: 100%; 
+            max-width: 440px; 
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+        }
+
+        .logo-area { display: flex; align-items: center; justify-content: center; gap: 10px; margin-bottom: 8px; }
+        .logo-icon { background: var(--accent-primary); padding: 8px; border-radius: 12px; display: flex; align-items: center; justify-content: center; }
+        h1 { font-size: 24px; font-weight: 700; background: linear-gradient(to right, #fff, #cbd5e1); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .subtitle { color: var(--text-muted); font-size: 13px; text-align: center; margin-bottom: 25px; }
+
+        .tabs { display: flex; background: rgba(0,0,0,0.2); padding: 4px; border-radius: 12px; margin-bottom: 25px; border: 1px solid var(--glass-border); }
+        .tab-btn { flex: 1; padding: 12px; background: none; border: none; color: var(--text-muted); font-weight: 600; font-size: 14px; cursor: pointer; border-radius: 8px; transition: all 0.2s; }
+        .tab-btn.active { background: rgba(255,255,255,0.07); color: #fff; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+
+        .input-label { font-size: 11px; font-weight: 600; color: #a1a1aa; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; display: block; }
+        
+        .phone-wrapper { position: relative; display: flex; align-items: center; margin-bottom: 20px; }
+        .custom-input { width: 100%; background: rgba(0,0,0,0.2); border: 1px solid var(--glass-border); padding: 16px 16px 16px 16px; border-radius: 14px; color: #fff; font-size: 16px; font-weight: 500; outline: none; transition: all 0.3s; }
+        .custom-input:focus { border-color: #6366f1; }
+
+        .plans-grid { display: flex; flex-direction: column; gap: 12px; margin-bottom: 25px; }
+        .plan-card { background: rgba(0,0,0,0.15); border: 1px solid var(--glass-border); padding: 16px; border-radius: 14px; display: flex; align-items: center; justify-content: space-between; cursor: pointer; transition: all 0.2s; }
+        .plan-card:hover { border-color: rgba(255,255,255,0.15); }
+        .plan-card.active { border-color: #a855f7; background: rgba(168, 85, 247, 0.08); }
+        
+        .plan-info { display: flex; align-items: center; gap: 14px; }
+        .plan-radio { width: 18px; height: 18px; border-radius: 50%; border: 2px solid var(--glass-border); display: flex; align-items: center; justify-content: center; }
+        .plan-card.active .plan-radio { border-color: #a855f7; }
+        .plan-card.active .plan-radio::after { content: ''; width: 8px; height: 8px; background: #a855f7; border-radius: 50%; }
+        
+        .plan-name { font-size: 14px; font-weight: 600; color: var(--text-main); }
+        .plan-desc { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+        .plan-price { font-size: 15px; font-weight: 700; color: #fff; }
+
+        .main-btn { width: 100%; background: var(--accent-primary); color: white; border: none; padding: 18px; border-radius: 14px; font-size: 16px; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; transition: all 0.2s; box-shadow: 0 10px 20px rgba(99, 102, 241, 0.2); }
+        .main-btn:hover { background: var(--accent-hover); }
+        .main-btn:disabled { background: #334155; color: #64748b; box-shadow: none; cursor: not-allowed; }
+
+        .overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(7, 10, 19, 0.85); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); z-index: 100; display: flex; justify-content: center; align-items: center; opacity: 0; pointer-events: none; transition: opacity 0.3s ease; }
+        .overlay.visible { opacity: 1; pointer-events: auto; }
+        .modal { background: #131129; border: 1px solid var(--glass-border); padding: 40px; border-radius: 24px; text-align: center; width: 90%; max-width: 360px; }
+        
+        .spinner { width: 50px; height: 50px; border: 4px solid rgba(255,255,255,0.05); border-top-color: #a855f7; border-radius: 50%; animation: spin 1s infinite linear; margin: 0 auto 20px; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        
+        .modal-title { font-size: 18px; font-weight: 600; margin-bottom: 8px; }
+        .modal-text { color: var(--text-muted); font-size: 14px; line-height: 1.5; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="logo-area">
+        <!-- SVG wifi icon that works completely offline -->
+        <div class="logo-icon">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h.01"/><path d="M8.5 16.5a5 5 0 0 1 7 0"/><path d="M5 13a10 10 0 0 1 14 0"/><path d="M1.5 9.5a15 15 0 0 1 21 0"/></svg>
+        </div>
+        <h1>GAMSAM CORE</h1>
+    </div>
+    <div class="subtitle">Premium High-Speed Hotspot Network</div>
+
+    <div class="tabs">
+        <button class="tab-btn active" id="buyTab" onclick="switchMode('buy')">Purchase Internet</button>
+        <button class="tab-btn" id="voucherTab" onclick="switchMode('voucher')">Use Voucher</button>
+    </div>
+
+    <!-- PANELS -->
+    <div id="buyPanel">
+        <span class="input-label">Mobile Money Account</span>
+        <div class="phone-wrapper">
+            <span style="position: absolute; left: 16px; color: #fff; font-weight: 600; font-size: 16px; pointer-events: none; z-index: 5;">+256</span>
+            <input type="tel" id="phone_suffix" class="custom-input" placeholder="771234567" maxlength="9" style="padding-left: 65px; width: 100%;" oninput="this.value = this.value.replace(/[^0-9]/g, '')">
+        </div>
+
+        <span class="input-label">Choose Data Package</span>
+        <div class="plans-grid">
+            <!-- Corrected Duration Label here -->
+            <div class="plan-card active" data-amount="1000" onclick="selectPlan(this)">
+                <div class="plan-info">
+                    <div class="plan-radio"></div>
+                    <div>
+                        <div class="plan-name">Light Speed Session</div>
+                        <div class="plan-desc">Continuous access • 24 Hours</div>
+                    </div>
+                </div>
+                <div class="plan-price">UGX 1K</div>
+            </div>
+
+            <div class="plan-card" data-amount="5000" onclick="selectPlan(this)">
+                <div class="plan-info">
+                    <div class="plan-radio"></div>
+                    <div>
+                        <div class="plan-name">Elite Weekly Pass</div>
+                        <div class="plan-desc">Priority bandwidth • 7 Days</div>
+                    </div>
+                </div>
+                <div class="plan-price">UGX 5K</div>
+            </div>
+
+            <div class="plan-card" data-amount="20000" onclick="selectPlan(this)">
+                <div class="plan-info">
+                    <div class="plan-radio"></div>
+                    <div>
+                        <div class="plan-name">Ultimate Infinity Pass</div>
+                        <div class="plan-desc">Maximum allocation • 30 Days</div>
+                    </div>
+                </div>
+                <div class="plan-price">UGX 20K</div>
+            </div>
+        </div>
+
+        <input type="hidden" id="selectedAmount" value="1000">
+        <button id="payBtn" class="main-btn" onclick="executeSecurePayment()">
+            <span>Initialize Connection</span>
+        </button>
+    </div>
+
+    <div id="voucherPanel" style="display: none;">
+        <span class="input-label">Enter Voucher Ticket Code</span>
+        <div class="phone-wrapper">
+            <input type="text" id="voucherCode" class="custom-input" placeholder="GSM-XXXXXX" style="text-transform: uppercase;">
+        </div>
+        
+        <button id="loginVoucherBtn" class="main-btn" onclick="executeVoucherLogin()">
+            <span>Authenticate Ticket</span>
+        </button>
+    </div>
+</div>
+
+<div class="overlay" id="statusOverlay">
+    <div class="modal">
+        <div class="spinner" id="modalSpinner"></div>
+        <div class="modal-title" id="modalTitle">Sending Request</div>
+        <div class="modal-text" id="modalText">Please wait...</div>
+    </div>
+</div>
+
+<form id="mikrotikForm" action="http://192.168.88" method="post" style="display:none;">
+    <input type="hidden" name="username" id="mt_user">
+    <input type="hidden" name="password" id="mt_pass">
+    <input type="hidden" name="dst" value="https://google.com">
+</form>
+
+
+<script>
+    // Set this URL to hit your local Node server environment during laptop development tests
+    const BACKEND_URL = "https://gamsam-box-wifi.onrender.com"; 
+
+    const urlParams = new URLSearchParams(window.location.search);
+    const userMac = urlParams.get('mac') || '00:00:00:00:00:00';
+    const userIp = urlParams.get('ip') || '192.168.88.254';
+
+    function switchMode(mode) {
+        if(mode === 'buy') {
+            document.getElementById('buyTab').classList.add('active');
+            document.getElementById('voucherTab').classList.remove('active');
+            document.getElementById('buyPanel').style.display = 'block';
+            document.getElementById('voucherPanel').style.display = 'none';
+        } else {
+            document.getElementById('buyTab').classList.remove('active');
+            document.getElementById('voucherTab').classList.add('active');
+            document.getElementById('buyPanel').style.display = 'none';
+            document.getElementById('voucherPanel').style.display = 'block';
+        }
+    }
+
+    function selectPlan(element) {
+        document.querySelectorAll('.plan-card').forEach(card => card.classList.remove('active'));
+        element.classList.add('active');
+        const amount = element.getAttribute('data-amount');
+        document.getElementById('selectedAmount').value = amount;
+    }
+
+    function showModal(title, text, showSpinner = true) {
+        document.getElementById('statusOverlay').classList.add('visible');
+        document.getElementById('modalTitle').innerText = title;
+        document.getElementById('modalText').innerText = text;
+        document.getElementById('modalSpinner').style.display = showSpinner ? 'block' : 'none';
+    }
+
+    function hideModal() {
+        document.getElementById('statusOverlay').classList.remove('visible');
+    }
+
+    async function executeSecurePayment() {
+        const suffix = document.getElementById('phone_suffix').value.trim();
+        const amount = document.getElementById('selectedAmount').value;
+        const payBtn = document.getElementById('payBtn');
+
+        if(suffix.length !== 9) {
+            alert("Please enter a valid 9-digit mobile number (e.g., 771234567)");
+            return;
+        }
+
+        const phone = "256" + suffix;
+        payBtn.disabled = true;
+        showModal("Pushing STK Prompt", "Authorize the transaction on your phone screen by entering your Mobile Money PIN.");
+
+        try {
+            // We set a longer timeout cushion context loop
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 45000); // 45 sec
+        
+            const response = await fetch(`${BACKEND_URL}/pay`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ phone, amount, business: "gamsam_boss_router", mac: userMac, ip: userIp })
+            });
+
+            const data = await response.json();
+            if (data.status === 'success') {
+                trackPaymentStatus(data.tx_ref);
+            } else {
+                terminateSession("Transaction Refused", "The network gateway rejected the transaction. Please try again.");
+            }
+        } catch (error) {
+            terminateSession("Gateway Timeout", "Could not establish an active connection with the core engine backend.");
+        }
+    }
+
+    function trackPaymentStatus(tx_ref) {
+        let iterations = 0;
+        const trackingInterval = setInterval(async () => {
+            iterations++;
+            showModal("Verifying Transaction", `Awaiting payment confirmation... (${iterations}s)`);
+
+            if(iterations > 60) {
+                clearInterval(trackingInterval);
+                terminateSession("Session Expired", "Verification timed out.");
+                return;
+            }
+
+            try {
+                const res = await fetch(`${BACKEND_URL}/check-status/${tx_ref}`);
+                const record = await res.json();
+
+                if (record.status === 'paid' && record.voucher) {
+                    clearInterval(trackingInterval);
+                    submitToMikroTik(record.voucher);
+                }
+            } catch (err) {
+                console.warn("Polling error dropped...");
+            }
+        }, 3000);
+    }
+
+    async function executeVoucherLogin() {
+        const code = document.getElementById('voucherCode').value.trim().toUpperCase();
+        const loginBtn = document.getElementById('loginVoucherBtn');
+
+        if(!code) {
+            alert("Please enter your voucher ticket code to proceed.");
+            return;
+        }
+
+        loginBtn.disabled = true;
+        showModal("Validating Ticket", "Checking database records for remaining time values...");
+
+        try {
+            const response = await fetch(`${BACKEND_URL}/check-voucher/${code}`);
+            const data = await response.json();
+
+            if (data.status === 'active') {
+                submitToMikroTik(code);
+            } else if (data.status === 'expired') {
+                terminateSession("Ticket Expired", "This voucher ticket allocation period has reached its end limit.");
+            } else {
+                terminateSession("Invalid Ticket", "Voucher code not found inside the active session ledger registry.");
+            }
+        } catch (error) {
+            terminateSession("Link Down", "Unable to hit database to confirm this voucher state.");
+        }
+    }
+
+    function submitToMikroTik(voucherCode) {
+        showModal("Access Granted", "Credentials verified. Unlocking internet gateway tunnel...", true);
+        document.getElementById('mt_user').value = voucherCode;
+        document.getElementById('mt_pass').value = voucherCode;
+        setTimeout(() => {
+            document.getElementById('mikrotikForm').submit();
+        }, 1500);
+    }
+
+    function terminateSession(title, reason) {
+        document.getElementById('payBtn').disabled = false;
+        document.getElementById('loginVoucherBtn').disabled = false;
+        showModal(title, reason, false);
+        setTimeout(hideModal, 4000);
+    }
+</script>
+</body>
+</html>
+
+
+
