@@ -30,65 +30,54 @@ app.get('/', (req, res) => {
     res.status(200).send("Gamsam System Online. 🚀");
 });
 // PAY ROUTE
+// UPDATE ONLY THIS EXCLUSIVELY INSIDE YOUR SERVER.JS '/pay' BLOCK:
 app.post('/pay', async (req, res) => {
-    try {
-        const { phone, amount, business, mac, ip } = req.body;
-        const tenantId = business ? business.toLowerCase() : "gamsam_boss_router";
-        const tx_ref = `GAMSAM-${tenantId.toUpperCase()}-${Date.now()}`;
-        
-        let network = "MTN";
-        if (phone.startsWith("25670") || phone.startsWith("25675") || phone.startsWith("25674")) {
-            network = "AIRTEL";
-        }
-
-        const payload = {
-            "amount": amount,
-            "currency": "UGX",
-            "phone_number": phone,
-            "network": network,
-            "email": `${tenantId}@gamsam-wifi.com`,
-            "tx_ref": tx_ref,
-            "order_id": "WIFI-" + Date.now(),
-            "fullname": "Premium Wi-Fi Subscriber"
-        };
-
-        // Save initial placeholder context inside your local tracking registry instantly
-        sessionRegistry[tx_ref] = {
-            status: 'pending',
-            voucher: null,
-            business: tenantId,
-            phone: phone,
-            amount: amount,
-            mac: mac,
-            ip: ip
-        };
-
-        // Fire the API call asynchronously in the background. Do NOT use 'await' here.
-        axios.post(
-            'https://api.flutterwave.com/v3/charges?type=mobile_money_uganda', 
-            payload,
-            { 
-                headers: { 
-                    'Authorization': `Bearer ${process.env.FLW_SECRET_KEY}`, 
-                    'Content-Type': 'application/json' 
-                } 
-            }
-        ).then(response => {
-            console.log(`[STK PUSH SUCCESS] Ref: ${tx_ref} pushed to network gates.`);
-        }).catch(error => {
-            console.error(`[STK BACKGROUND ERR]: ${error.response ? JSON.stringify(error.response.data) : error.message}`);
-            if(sessionRegistry[tx_ref]) sessionRegistry[tx_ref].status = 'failed';
-        });
-
-        // ⚡ CRITICAL FIX: Return this JSON response immediately! 
-        // This cuts the connection early so the user's browser never experiences a timeout.
-        return res.status(200).json({ status: 'success', tx_ref });
-
-    } catch (globalError) {
-        console.error(`[PAY ROUTE CRITICAL FAILURE]:`, globalError);
-        return res.status(500).json({ status: 'failed', error: 'Internal gate timeout' });
+    const { phone, amount, business, mac, ip } = req.body;
+    const tenantId = business ? business.toLowerCase() : "gamsam_boss_router";
+    const tx_ref = `GAMSAM-${tenantId.toUpperCase()}-${Date.now()}`;
+    
+    let network = "MTN";
+    if (phone.startsWith("25670") || phone.startsWith("25675") || phone.startsWith("25674")) {
+        network = "AIRTEL";
     }
+
+    const payload = {
+        "amount": amount,
+        "currency": "UGX",
+        "phone_number": phone,
+        "network": network,
+        "email": `${tenantId}@gamsam-wifi.com`,
+        "tx_ref": tx_ref,
+        "order_id": "WIFI-" + Date.now(),
+        "fullname": "Premium Wi-Fi Subscriber"
+    };
+
+    sessionRegistry[tx_ref] = {
+        status: 'pending',
+        voucher: null,
+        business: tenantId,
+        phone: phone,
+        amount: amount,
+        mac: mac,
+        ip: ip
+    };
+
+    // ⚡ FIX: Fire-and-forget the outbound network query instantly in the background!
+    axios.post(
+        'https://api.flutterwave.com/v3/charges?type=mobile_money_uganda', 
+        payload,
+        { headers: { 'Authorization': `Bearer ${process.env.FLW_SECRET_KEY}`, 'Content-Type': 'application/json' } }
+    ).then(response => {
+        console.log(`[STK GATE SUCCESS] Handshaked with Uganda Carrier systems for ref: ${tx_ref}`);
+    }).catch(error => {
+        console.error(`[STK LIVE EXCEPTION]: ${error.response ? JSON.stringify(error.response.data) : error.message}`);
+        if(sessionRegistry[tx_ref]) sessionRegistry[tx_ref].status = 'failed';
+    });
+
+    // 👍 UNBLOCK FRONTEND: Respond immediately so index.html never logs a connection timeout error.
+    return res.status(200).json({ status: 'success', tx_ref });
 });
+
 
 app.post('/webhook', async (req, res) => {
     const signature = req.headers['verif-hash'];
