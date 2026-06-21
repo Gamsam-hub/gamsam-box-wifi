@@ -10,7 +10,7 @@ app.use(cors({
     allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'verif-hash']
 }));
 
-app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
 // CENTRAL TENANT REGISTRY
 const businessTenants = {
