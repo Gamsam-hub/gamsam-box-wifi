@@ -60,7 +60,7 @@ app.post('/pay', async (req, res) => {
 
     // FIRES THE API CALL AND REPLIES TO THE USER IMMEDIATELY WITHOUT WAITING
     axios.post(
-        'https://flutterwave.com', 
+        'https://api.flutterwave.com/v3/charges?type=mobile_money_uganda', 
         payload,
         { headers: { 'Authorization': `Bearer ${process.env.FLW_SECRET_KEY}`, 'Content-Type': 'application/json' } }
     ).then(response => {
