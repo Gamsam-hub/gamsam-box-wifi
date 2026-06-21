@@ -1,5 +1,8 @@
 // ensure path utilities are included
 const path = require('path');
+// ⚡ CRITICAL: Tells your server to freely serve styles, scripts, or graphics stored alongside index.html
+app.use(express.static(path.join(__dirname)));
+
 // UPDATE your existing app.get('/') block to send the actual portal layout:
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'index.html'));
