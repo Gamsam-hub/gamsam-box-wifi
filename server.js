@@ -1,26 +1,32 @@
-// ensure path utilities are included
-const path = require('path');
-// ⚡ CRITICAL: Tells your server to freely serve styles, scripts, or graphics stored alongside index.html
-app.use(express.static(path.join(__dirname)));
-
-// UPDATE your existing app.get('/') block to send the actual portal layout:
-app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, 'index.html'));
-});
-
+// 1. Move ALL your core package requires to the very top lines
 const express = require('express');
 const cors = require('cors');
 const axios = require('axios');
+const path = require('path'); // Path utility module
 require('dotenv').config();
 
+// 2. Initialize your App application instance immediately
 const app = express();
+
+// 3. Apply your core configuration middleware layers
 app.use(cors({
     origin: '*',
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'verif-hash']
 }));
-
+app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+// 4. Tell the app to serve your static assets safely from the cloud repository
+app.use(express.static(path.join(__dirname)));
+
+// 5. Serve your untouched index.html template design layout on the root route
+app.get('/', (req, res) => {
+    res.sendFile(path.join(__dirname, 'index.html'));
+});
+
+// ... Leave your central tenant registry and remaining code exactly as it is below this line
+
 
 // CENTRAL TENANT REGISTRY
 const businessTenants = {
